@@ -1,0 +1,482 @@
+import React, { useState ,useEffect,useContext} from 'react';
+import { AppBar,Badge, Button,IconButton,List,ListItem, Tab, Tabs, Typography} from '@material-ui/core';
+import  Toolbar  from '@material-ui/core/Toolbar';
+import useScrollTrigger from '@material-ui/core/useScrollTrigger';
+import { makeStyles } from '@material-ui/styles';
+
+
+import { Link } from 'react-router-dom';
+import {useTheme} from '@material-ui/core/styles';
+import { useMediaQuery } from '@material-ui/core';
+import SwipeableDrawer from '@material-ui/core/SwipeableDrawer';
+import MenuIcon from '@material-ui/icons/Menu'
+import { ListItemText } from '@material-ui/core';
+import  SearchIcon from '@material-ui/icons/Search';
+import { InputBase } from '@material-ui/core';
+import { Favorite ,LocalMall } from '@material-ui/icons';
+import { auth } from '../../firebase'
+import { useHistory } from 'react-router';
+import HeaderV from './HeaderV';
+import { StateContext } from '../../context/StateContext';
+
+function ElevationScroll(props) {
+    const { children} = props;
+    
+    const trigger = useScrollTrigger({
+      disableHysteresis: true,
+      threshold: 0
+    });
+    return React.cloneElement(children, {
+        elevation: trigger ? 4 : 0,
+      });
+    }
+
+const useStyles = makeStyles(theme=>({
+    toolbarMargin:{
+        ...theme.mixins.toolbar,
+        marginBottom:'3em',
+        [theme.breakpoints.down('md')]:{
+            marginBottom:'0.2em'
+        },
+        [theme.breakpoints.down('xs')]:{
+            marginBottom:'1em'
+        }
+    },
+    logo:{
+        height:20,
+        marginLeft:'2em',
+        [theme.breakpoints.down('md')]:{
+            height:20
+        },
+        [theme.breakpoints.down('xs')]:{
+            height:20
+        }
+        
+    },
+    logoContainer:{
+        marginLeft:'6em',
+        marginRight:'4em',
+        padding:0,
+        "&:hover":{
+            backgroundColor:'transparent'
+        },
+        [theme.breakpoints.down('md')]:{
+            marginRight:'1em',
+            marginLeft:'1em'
+        },
+        [theme.breakpoints.down('sm')]:{
+            marginRight:0,
+            marginLeft:0
+        }
+        
+    },
+    tabContainer:{
+        marginRight:'auto'
+    },
+    tab:{
+        ...theme.typography.tab,
+        minWidth:10,
+        marginLeft:'25px'
+
+    },
+    button:{
+        ...theme.typography.estimate,
+        borderRadius:'50px',
+        marginLeft:'50px',
+        marginRight:'50px',
+        height:'45px',
+        '&:hover':{
+            backgroundColor:theme.palette.secondary.light
+        }
+    },
+    menu: {
+        backgroundColor: theme.palette.common.blue,
+        color: "white",
+        borderRadius: "0px"
+      },
+      menuItem: {
+        ...theme.typography.tab,
+        opacity: 0.7,
+        "&:hover": {
+          opacity: 1
+        }
+      },
+    drawerIcon:{
+        height:'50px',
+        width:'50px',
+        color:'black'
+    },
+    drawerIconContainer:{
+        marginLeft:'auto',
+        "&:hover":{
+            backgroundColor:'transparent'
+        }
+    },
+    drawer:{
+        backgroundColor:'white',
+        width:'15em'
+    },
+    drawerItem:{
+        ...theme.typography.tab,
+        color:'black',
+        opacity:1
+    },
+    drawerItemEstimate: {
+        backgroundColor: theme.palette.common.orange,
+        "&:hover":{
+            backgroundColor:'orange'
+        }
+      },
+      drawerItemSelected: {
+        "& .MuiListItemText-root": {
+          opacity: 1
+
+        }
+      },
+    appBar:{
+        zIndex:theme.zIndex.modal + 1,
+        backgroundColor:'#FFB319',
+        borderBottom:'#F037A5'
+    },
+    searchIcon: {
+        padding: theme.spacing(0, 0.2),
+        height: '100%',
+        position: 'absolute',
+        pointerEvents: 'none',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        color:'black'
+      },
+      search: {
+        position: 'relative',
+        borderRadius: theme.shape.borderRadius,
+        border: "1px solid black",
+        backgroundColor: theme.palette.common.white,
+        '&:hover': {
+          backgroundColor: theme.palette.common.white,
+        },
+        marginRight: theme.spacing(2),
+        marginLeft: 0,
+        width: '100%',
+        [theme.breakpoints.up('sm')]: {
+          marginLeft: theme.spacing(3),
+          width: 'auto',
+        },
+      },
+      inputRoot: {
+        color: 'black',
+      },
+      inputInput: {
+        padding: theme.spacing(1, 1, 1, 0),
+        // vertical padding + font size from searchIcon
+        paddingLeft: `calc(1em + ${theme.spacing(4)}px)`,
+        transition: theme.transitions.create('width'),
+        width: '100%',
+        [theme.breakpoints.up('md')]: {
+          width: '20ch',
+        },
+      },
+}));
+
+
+export default function Header(props){
+    const classes = useStyles();
+    const theme = useTheme();
+    const history = useHistory('');
+    const iOS = process.browser && /iPad|iPhone|iPod/.test(navigator.userAgent);
+    const matches = useMediaQuery(theme.breakpoints.down('md'));
+
+    const [search, setSearch] = useState("");
+    const [openDrawer,setOpenDrawer] = useState(false)
+
+    const {cart,wish} =useContext(StateContext);
+    const [dataCart] =  cart;
+    const [dataWishlist] = wish;
+
+    const handelSubmit = (e) => {
+        e.preventDefault();
+        history.push(`/search?name=${search}`);
+        setSearch("")
+    }
+    const handleChange = (e,newValue)=>{
+        props.setValue(newValue);
+    }
+   
+
+    const routes = [
+        {name:'MEN',link:'/men',activeIndex:0},
+        {name:'WOMEN',link:'/women',activeIndex:1,}, 
+        {name:'MOBILE COVER',link:'/cover',activeIndex:2},
+    ];
+    const routesH = [
+        {name:'Men',link:'/men',activeIndex:0},
+        {name:'Women',link:'/women',activeIndex:1,}, 
+        {name:'Mobile Cover',link:'/cover',activeIndex:2},
+        {name:'HOME',link:'/',activeIndex:9},
+    ];
+
+    const routesV = [
+        {name:'My Account',link:'/myaccount',activeIndex:4},
+        {name:'My Order',link:'/myorders',activeIndex:5,}, 
+        {name:'My Wishlist',link:'/whistlist',activeIndex:7},
+        {name:'Cart',link:'/cart',activeIndex:8},
+    ];
+    useEffect(() => {
+        [...routes,...routesV,...routesH].forEach(route=>{
+            switch (window.location.pathname) {
+                case `${route.link}`:
+                    if(props.value !== route.activeIndex){
+                        props.setValue(route.activeIndex)
+                        if(route.selectedIndex && route.selectedIndex !== props.selectedIndex){
+                            props.setSelectedIndex(route.selectedIndex)
+                        }
+                    }
+                        break;
+                    case '/login':
+                        props.setValue(3);
+                        break;
+                        default:
+                            break;
+                }
+            }
+        )
+    })
+
+    const tabs = (
+        <React.Fragment>
+            <Tabs 
+                className={classes.tabContainer} 
+                value={props.value} 
+                onChange={handleChange} 
+                indicatorColor='#FFB319'
+            >
+                {routes.map((route,index)=>(
+                        <Tab
+                            key={`${route}${index}`}
+                            className={classes.tab}
+                            component={Link}
+                            style={{color:'black'}}
+                            to={route.link}
+                            label={route.name}
+                        />
+                ))}
+            </Tabs>
+            <div className={classes.search}>
+             <form onSubmit={(e) => handelSubmit(e)}>
+                    <div className={classes.searchIcon}>
+                        <Button>  <SearchIcon /> </Button>
+                    </div>
+                    <InputBase
+                        onChange={(e) => setSearch(e.target.value)}
+                        placeholder="Search…"
+                        classes={{
+                            root: classes.inputRoot,
+                            input: classes.inputInput,
+                        }}
+                        value={search}
+                        inputProps={{ 'aria-label': 'search' }}
+                    />
+                </form>
+            </div>
+            {props.user ? <>
+                    <HeaderV  user={props.user} />
+            </>
+                :<Button
+                    style={{ color: "black" }}
+                    component={Link}
+                    to='/Login'
+                    onClick={() => props.setValue(5)}
+                >
+                    <Typography style={{fontFamily:'Raleway',
+                        textTransform:'none',
+                        fontWeight:700,
+                        fontSize:'1.3rem',
+                        color:'#171717'}}
+                    >
+                    Login
+                    </Typography>
+                </Button>
+            }
+        <Button  
+            component={Link} 
+            to='/whistlist' 
+            onClick={() => props.setValue(8)} 
+        >
+            <Favorite style={{color:dataWishlist.length ? '#FF0000':'black'}}/>
+        </Button>
+        <Button 
+            style={{marginRight:'10em'}}  
+            component={Link} 
+            to='/cart' 
+            onClick={() => props.setValue(8)}
+        >
+            <Badge badgeContent={dataCart.length} color="error">
+                <LocalMall style={{color:'black'}} />
+            </Badge>
+        </Button>
+        </React.Fragment>
+
+    );
+    const drawer = (
+        <React.Fragment>
+            <SwipeableDrawer 
+                disableBackdropTransition={!iOS} 
+                disableDiscovery={iOS}
+                open={openDrawer}
+                onClose={()=>setOpenDrawer(false)}
+                onOpen={()=>setOpenDrawer(true)}
+                classes={{paper:classes.drawer}}
+            > 
+            <div className={classes.toolbarMargin} />
+            <List disablePadding >
+            {props.user ? <ListItem style={{backgroundColor:'#d9dadb'}}>
+               <ListItemText >
+                    <Typography variant='h3' style={{fontSize:'1.5rem',fontFamily:'Allan',
+                      textTransform:'none',
+                      color:'black',
+                      fontWeight:500 }} align='left' 
+                      >
+                        Hello,{" "}
+                        <span >{props.user.displayName}</span>
+                        </Typography>
+                    </ListItemText>
+                    </ListItem>
+                     :
+                     <ListItem button>
+                          <ListItemText onClick={() => { setOpenDrawer(false); 
+                            history.push('/login') }}>
+                                <Typography style={{color:'black',fontFamily:'Raleway',fontWeight:700}}>
+                                        Login/Sign Up
+                                </Typography>
+                            </ListItemText>
+                     </ListItem>
+                    
+                    }
+                    
+                
+                <ListItem>
+                    <ListItemText >
+                        <Typography variant='body1' style={{color:'rgba(0,0,0,.3)',fontWeight:500}}>
+                             Shop In
+                        </Typography>
+                    </ListItemText>
+                </ListItem>
+                 {routesH.map(route=>(
+                    <ListItem   
+                        key={`${route}${route.activeIndex}`}
+                        divider 
+                        button 
+                        component={Link} 
+                        to={route.link} 
+                        selected={props.value === route.activeIndex}
+                        classes ={{selected: classes.drawerItemSelected}}
+                        onClick={()=>{
+                            setOpenDrawer(false); 
+                            props.setValue(route.activeIndex)
+                        }}       
+                    >
+                        <ListItemText disableTypography
+                            className={classes.drawerItem} 
+                        >
+                                {route.name}
+                        </ListItemText>
+                    </ListItem>
+                ))}
+                {props.user ?
+                  <React.Fragment>
+                 <ListItem>
+                    <ListItemText >
+                    <Typography variant='body1' style={{color:'rgba(0,0,0,.3)',fontWeight:500}}>
+                        My Profile
+                    </Typography>
+                    </ListItemText>
+                </ListItem>
+              
+                {routesV.map(route=>(
+                    <ListItem   
+                        key={`${route}${route.activeIndex}`}
+                        divider 
+                        button 
+                        component={Link} 
+                        to={route.link} 
+                        selected={props.value === route.activeIndex}
+                        classes ={{selected: classes.drawerItemSelected}}
+                        onClick={()=>{
+                            setOpenDrawer(false); 
+                            props.setValue(route.activeIndex)
+                        }}       
+                    >
+                        <ListItemText disableTypography
+                            className={classes.drawerItem} 
+                        >
+                                {route.name}
+                        </ListItemText>
+                    </ListItem>
+                ))}
+                 <ListItem 
+                        divider 
+                        button 
+                        component={Link} 
+                        to='/estimate' 
+                        classes={{
+                            root:classes.drawerItemEstimate,
+                            selected:classes.drawerItemSelected
+                        }}
+                        onClick={()=>{
+                            auth.signOut()                  
+                            setOpenDrawer(false); 
+                            props.setValue(9)
+                        }}
+                        selected={props.value === 9}
+                    >
+                        <ListItemText 
+                            className={classes.drawerItem}  
+                            disableTypography 
+                        >
+                              Logout
+                        </ListItemText>
+                    </ListItem>
+                    </React.Fragment>
+                : null
+                }        
+            </List>
+            </SwipeableDrawer>
+                <IconButton className={classes.drawerIconContainer}
+                            onClick={()=>setOpenDrawer(!openDrawer)}
+                            disableRipple
+                            
+                >
+                    <MenuIcon  className={classes.drawerIcon}/>
+                </IconButton>
+        </React.Fragment>
+    );
+   
+    
+    return (
+        <React.Fragment>
+            <ElevationScroll>
+            <AppBar position='fixed' className={classes.appBar}>
+                <Toolbar disableGutters>
+                    <Button 
+                        className={classes.logoContainer} 
+                        component={Link} 
+                        to='/'
+                        onClick={()=>props.setValue(9)}
+                        disableRipple
+                    >
+                   <img alt='company logo' 
+                        src='https://trendy.pt/wp-content/uploads/2018/01/Trendy-Logo-DEF.png' 
+                        className={classes.logo}
+                    />
+                    </Button>
+                 
+                  {matches ? drawer : tabs}
+                </Toolbar>
+            </AppBar>
+            </ElevationScroll>
+            <div className={classes.toolbarMargin} />
+        </React.Fragment>
+    );
+}
+
